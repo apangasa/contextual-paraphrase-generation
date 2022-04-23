@@ -1,5 +1,31 @@
 import os
 import json
+import language_tool_python
+from tqdm import tqdm
+import autocorrect
+
+tool = language_tool_python.LanguageTool('en-US')
+speller = autocorrect.Speller()
+
+
+def correct_errors(text):
+    update_length = 0
+    broken_rules = tool.check(text)
+    for rule in broken_rules:
+        if rule.category != 'TYPOS':
+            continue
+
+        if len(rule.replacements):
+            if rule.replacements[0] == '':
+                continue
+
+            error_index = rule.offset
+            error_length = rule.errorLength
+
+            text = text[:error_index + update_length] + rule.replacements[0] + \
+                text[error_index + error_length + update_length:]
+            update_length += len(rule.replacements[0]) - error_length
+    return text
 
 
 def construct_data_dict():
@@ -12,7 +38,7 @@ def construct_data_dict():
             continue
 
         with open(os.path.join(wa_path, fname), 'r', encoding='utf8') as wa_file:
-            for line in wa_file.readlines():
+            for line in tqdm(wa_file.readlines()):
 
                 if 'a:' in line:  # remove answer
                     line = line[line.find('q:'):]
@@ -29,6 +55,12 @@ def construct_data_dict():
                 # extract phrase and paraphrase
                 key = questions.pop()
                 val = questions.pop()
+
+                # key = speller(key)
+                # val = speller(val)
+
+                # key = correct_errors(key)
+                # val = correct_errors(val)
 
                 # add phrase: paraphrase to dictionary
                 phrase_paraphrase_map[key] = val
