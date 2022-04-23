@@ -52,9 +52,9 @@ def construct_data_dict():
                 if len(questions) < 2:  # check we have at least a phrase and paraphrase
                     continue
 
-                # extract phrase and paraphrase
-                key = questions.pop()
-                val = questions.pop()
+                # extract phrase and paraphrase, remove ? mark
+                key = questions.pop()[:-1]
+                val = questions.pop()[:-1]
 
                 # key = speller(key)
                 # val = speller(val)
